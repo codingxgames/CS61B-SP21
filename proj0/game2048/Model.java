@@ -152,7 +152,7 @@ public class Model extends Observable {
                         if (t2 != null) {
                             board.move(col, row, t2);
                             changed = true;
-                            break; //move一次后，就跳出最内层for3循环
+                            break; //move一次后，就跳出最内层for3循环.
                         }
                     }
                 }
