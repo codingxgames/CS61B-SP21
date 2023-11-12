@@ -27,6 +27,7 @@ public class Model extends Observable {
 
     /** A new 2048 game on a board of size SIZE with no pieces
      *  and score 0. */
+    /** xg: A new game is a new instance, so use non-static method */
     public Model(int size) {
         board = new Board(size);
         score = maxScore = 0;
@@ -113,7 +114,51 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        // from https://github.com/KANIKIG/cs61b-sp21/blob/main/proj0/game2048/Model.java
+        board.setViewingPerspective(side);
 
+        // t1不为null的情况
+        for (int col = 0; col < board.size(); col += 1) { // for1
+            for (int row = board.size() - 1; row >= 0; row -= 1) { // for2
+                Tile t1 = board.tile(col, row);
+                if (t1 != null) {
+                    for (int row2 = row -1; row2 >= 0; row2 -= 1) { // for3
+                        Tile t2 = board.tile(col, row2);
+                        if (t2 != null) {
+                            if (t1.value() == t2.value()) {
+                                board.move(col, row, t2);
+                                changed = true;
+                                score += 2 * t1.value();
+                                row = row2;
+                                break; //merge一次后，就跳出最内层for3循环
+                            } else { // t1和t2有value，但不相等，跳出for3循环
+                                break;
+                            }
+                        } else { // t2 为null，继续下一个for3循环
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        // t1为null的情况
+        for (int col = 0; col < board.size(); col += 1) { // for1
+            for (int row = board.size() - 1; row >= 0; row -= 1) { // for2
+                Tile t1 = board.tile(col, row);
+                if (t1 == null) {
+                    for (int row2 = row -1; row2 >= 0; row2 -= 1) { // for3
+                        Tile t2 = board.tile(col, row2);
+                        if (t2 != null) {
+                            board.move(col, row, t2);
+                            changed = true;
+                            break; //move一次后，就跳出最内层for3循环
+                        }
+                    }
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -138,6 +183,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int row = 0; row < b.size(); row += 1) {
+            for (int col = 0; col < b.size(); col += 1) {
+                if (b.tile(col, row) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +200,13 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for (int row = 0; row < b.size(); row += 1) {
+            for (int col = 0; col < b.size(); col += 1) {
+                if (b.tile(col, row) != null && b.tile(col, row).value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,8 +218,34 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (emptySpaceExists(b) || adjacentSameValue(b)) {
+            return true;
+        }
         return false;
     }
+
+    public static boolean adjacentSameValue(Board b) {
+        int[] x = new int[]{0, 1, 0, -1};
+        int[] y = new int[]{1, 0, -1, 0}; // adjacent up, down, left, right
+
+        for (int row = 0; row < b.size(); row += 1) {
+            for (int col = 0; col < b.size(); col += 1) {
+                for (int i = 0; i < 4; i++) {
+                    int adjacentRow = row + x[i];
+                    int adjacentCol = col + y[i];
+
+                    // valid row and col
+                    if (adjacentRow >= 0 && adjacentRow < b.size() && adjacentCol >= 0 && adjacentCol < b.size()) {
+                        if (b.tile(col, row).value() == b.tile(adjacentCol, adjacentRow).value()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 
 
     @Override
